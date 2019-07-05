@@ -1,3 +1,8 @@
+
+基于JustTrustMe的二次开发，去掉了hook org.apache.http.legacy 的部分，在miui10上亲测可用
+
+
+
 JustTrustMe
 ===========
 
