@@ -61,8 +61,11 @@ public class Main implements IXposedHookLoadPackage {
 
         currentPackageName = lpparam.packageName;
 
+        if (!currentPackageName.equals("com.dianping.v1")){
+            return;
+        }
         try {
-            //hookDefaultHttpClient();
+            hookDefaultHttpClient();
         } catch (Exception e){
             e.printStackTrace();
         }
@@ -223,6 +226,7 @@ public class Main implements IXposedHookLoadPackage {
                         // Hook OkHttp or third party libraries.
                         Context context = (Context) param.args[0];
                         processOkHttp(context.getClassLoader());
+                        processOkHttpForDianping(context.getClassLoader());
                         processHttpClientAndroidLib(context.getClassLoader());
                         processXutils(context.getClassLoader());
                     }
@@ -530,6 +534,136 @@ public class Main implements IXposedHookLoadPackage {
         } catch (ClassNotFoundException e) {
             // pass
             Log.d(TAG, "httpclientandroidlib not found in " + currentPackageName + "-- not hooking");
+        }
+    }
+
+    void processOkHttpForDianping(ClassLoader classLoader) {
+        /* hooking OKHTTP by SQUAREUP */
+        /* com/squareup/okhttp/CertificatePinner.java available online @ https://github.com/square/okhttp/blob/master/okhttp/src/main/java/com/squareup/okhttp/CertificatePinner.java */
+        /* public void check(String hostname, List<Certificate> peerCertificates) throws SSLPeerUnverifiedException{}*/
+        /* Either returns true or a exception so blanket return true */
+        /* Tested against version 2.5 */
+        Log.i(TAG, "Hooking dianping (2.5) for: " + currentPackageName);
+
+        try {
+            classLoader.loadClass("com.squareup.okhttp.CertificatePinner");
+            findAndHookMethod("com.squareup.okhttp.CertificatePinner",
+                    classLoader,
+                    "check",
+                    String.class,
+                    List.class,
+                    new XC_MethodReplacement() {
+                        @Override
+                        protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                            return true;
+                        }
+                    });
+        } catch (ClassNotFoundException e) {
+            // pass
+            Log.e(TAG, "dianping OKHTTP 2.5 not found in " + currentPackageName + "-- not hooking");
+        }
+
+        //https://github.com/square/okhttp/blob/parent-3.0.1/okhttp/src/main/java/okhttp3/CertificatePinner.java#L144
+
+        //okhttp3.CertificatePinner.check
+        Log.i(TAG, "Hooking dianping (3.x) for: " + currentPackageName);
+
+        try {
+            classLoader.loadClass("okhttp3.g");
+            findAndHookMethod("okhttp3.g",
+                    classLoader,
+                    "a",
+                    String.class,
+                    List.class,
+                    new XC_MethodReplacement() {
+                        @Override
+                        protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                            Log.w(TAG, "okhttp3.g.a replaceHookedMethod");
+                            return null;
+                        }
+                    });
+        } catch (ClassNotFoundException e) {
+            Log.e(TAG, "Dianping OKHTTP 3.x not found in " + currentPackageName + " -- not hooking");
+            // pass
+        }
+
+        //https://github.com/square/okhttp/blob/parent-3.0.1/okhttp/src/main/java/okhttp3/internal/tls/OkHostnameVerifier.java
+        //okhttp3.internal.tls.OkHostnameVerifier
+        try {
+            classLoader.loadClass("okhttp3.internal.tls.d");
+            findAndHookMethod("okhttp3.internal.tls.d",
+                    classLoader,
+                    "verify",
+                    String.class,
+                    javax.net.ssl.SSLSession.class,
+                    new XC_MethodReplacement() {
+                        @Override
+                        protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                            Log.w(TAG, "okhttp3.internal.tls.d.verify replaceHookedMethod");
+                            return true;
+                        }
+                    });
+        } catch (ClassNotFoundException e) {
+            Log.e(TAG, "Dianping OKHTTP 3.x not found in " + currentPackageName + " -- not hooking OkHostnameVerifier.verify(String, SSLSession)");
+            // pass
+        }
+
+        //https://github.com/square/okhttp/blob/parent-3.0.1/okhttp/src/main/java/okhttp3/internal/tls/OkHostnameVerifier.java
+        //okhttp3.internal.tls.OkHostnameVerifier
+        try {
+            classLoader.loadClass("okhttp3.internal.tls.d");
+            findAndHookMethod("okhttp3.internal.tls.d",
+                    classLoader,
+                    "a",
+                    String.class,
+                    java.security.cert.X509Certificate.class,
+                    new XC_MethodReplacement() {
+                        @Override
+                        protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                            Log.w(TAG, "okhttp3.internal.tls.d.a replaceHookedMethod");
+                            return true;
+                        }
+                    });
+        } catch (ClassNotFoundException e) {
+            Log.e(TAG, "Dianping a() 3.x not found in " + currentPackageName + " -- not hooking OkHostnameVerifier.verify(String, X509)(");
+            // pass
+        }
+
+        try {
+            classLoader.loadClass("okhttp3.internal.tls.d");
+            findAndHookMethod("okhttp3.internal.tls.d",
+                    classLoader,
+                    "b",
+                    String.class,
+                    java.security.cert.X509Certificate.class,
+                    new XC_MethodReplacement() {
+                        @Override
+                        protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                            Log.w(TAG, "okhttp3.internal.tls.d.b replaceHookedMethod");
+                            return false;
+                        }
+                    });
+        } catch (ClassNotFoundException e) {
+            Log.e(TAG, "Dianping b() 3.x not found in " + currentPackageName + " -- not hooking OkHostnameVerifier.verify(String, X509)(");
+            // pass
+        }
+        try {
+            classLoader.loadClass("okhttp3.internal.tls.d");
+            findAndHookMethod("okhttp3.internal.tls.d",
+                    classLoader,
+                    "c",
+                    String.class,
+                    java.security.cert.X509Certificate.class,
+                    new XC_MethodReplacement() {
+                        @Override
+                        protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                            Log.w(TAG, "okhttp3.internal.tls.d.c replaceHookedMethod");
+                            return false;
+                        }
+                    });
+        } catch (ClassNotFoundException e) {
+            Log.e(TAG, "Dianping c() 3.x not found in " + currentPackageName + " -- not hooking OkHostnameVerifier.verify(String, X509)(");
+            // pass
         }
     }
 
